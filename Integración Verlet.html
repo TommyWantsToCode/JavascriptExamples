@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<title> Movimiento de estructuras </title>
+	</head>
+	<!-- Tomás Garza -->
+	<body style="background: #000000;">
+		<div style="display: flex;justify-content:space-around;width:100%;padding-top:200px;">
+			<canvas width="800" height="600" id="pantalla"></canvas>
+		</div>
+		<script type="text/javascript">
+			var canvas = document.getElementById('pantalla');
+			var g = canvas.getContext('2d');
+			var WIDTH = 800;
+			var HEIGHT = 600;
+
+			var puntos = [];
+			var lineas = [];
+
+			function nuevoPunto(x, y, movimiento) {
+				var punto = {
+					x: x,
+					y: y,
+					x_anterior: x,
+					y_anterior: y,
+					movimiento: movimiento
+				};
+				puntos.push(punto);
+				return punto;
+			}
+			function nuevaLinea(punto1, punto2, dibujar) {
+				var linea = {
+					punto1: punto1,
+					punto2: punto2,
+					distancia: Math.sqrt(Math.pow(punto2.x-punto1.x, 2) + Math.pow(punto2.y-punto1.y, 2)),
+					dibujar: dibujar
+				};
+				lineas.push(linea);
+				return linea;
+			}
+
+			function limpiarPantalla() {
+				g.fillStyle = '#323232';
+				g.fillRect(0, 0, WIDTH, HEIGHT);
+			}
+
+			function dibujarLineas() {
+				g.strokeStyle = '#D2D2D2';
+				g.beginPath();
+				for (var i = lineas.length-1; i >= 0; i--) {
+					var linea = lineas[i];
+					if (linea.dibujar) {
+						g.moveTo(linea.punto1.x, linea.punto1.y);
+						g.lineTo(linea.punto2.x, linea.punto2.y);
+					}
+				}
+				g.stroke();
+			}
+
+			function moverPuntos() {
+				for (var i = puntos.length-1; i >= 0; i--) {
+					var punto = puntos[i];
+					if (punto.movimiento) {
+						var dx = punto.x-punto.x_anterior;
+						var dy = punto.y-punto.y_anterior + 1;
+						punto.x_anterior = punto.x;
+						punto.x = punto.x + dx;
+						punto.y_anterior = punto.y;
+						punto.y = punto.y + dy;
+					}
+				}
+			}
+			
+			function arreglarLineas(fuerza) {
+				for (var n = 0; n < fuerza; n++) {
+					for (var i = lineas.length-1; i >= 0; i--) {
+						var linea = lineas[i];
+						var distanciaActual = Math.sqrt(Math.pow(linea.punto2.x-linea.punto1.x, 2) + Math.pow(linea.punto2.y-linea.punto1.y, 2));
+						var distanciaError = distanciaActual - linea.distancia;
+						var porcentajeError = distanciaError / distanciaActual;
+						var dx = 0.5*(linea.punto2.x-linea.punto1.x)*porcentajeError
+						var dy = 0.5*(linea.punto2.y-linea.punto1.y)*porcentajeError
+						if (linea.punto1.movimiento) {
+							linea.punto1.x += dx;
+							linea.punto1.y += dy;
+						}
+						if (linea.punto2.movimiento) {
+							linea.punto2.x -= dx;
+							linea.punto2.y -= dy;
+						}
+					}
+				}
+			}
+
+			function crearEscena() {
+
+				var puntoInicio = nuevoPunto(400, 100, false);
+				var puntoFinal = puntoInicio;
+				for (var i = 0; i < 8; i++) {
+					var puntoAnterior = puntoFinal;
+					puntoFinal = nuevoPunto(puntoFinal.x+20, puntoFinal.y+20, true);
+					nuevaLinea(puntoAnterior, puntoFinal, true);
+				}
+
+				var A = puntoFinal;
+				var B = nuevoPunto(A.x + 50, A.y, true);
+				var C = nuevoPunto(B.x, B.y - 50, true);
+				var D = nuevoPunto(A.x, A.y - 50, true);
+
+				nuevaLinea(A, B, true);
+				nuevaLinea(B, C, true);
+				nuevaLinea(C, D, true);
+				nuevaLinea(D, A, true);
+				nuevaLinea(A, C, false);
+
+			}
+
+			function iniciarCiclo() {
+
+				setInterval(function() {
+					limpiarPantalla();
+					moverPuntos();
+					arreglarLineas(3);
+					dibujarLineas();
+				}, 1000/30);
+
+			}
+
+			
+			crearEscena();
+			iniciarCiclo();
+
+		</script>
+	</body>
+</html>
